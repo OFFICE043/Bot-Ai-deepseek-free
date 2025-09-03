@@ -7,11 +7,31 @@ from aiogram import Bot, Dispatcher, types, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher import FSMContext
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 import aiohttp
 import asyncio
 import json
+from flask import Flask
+from threading import Thread
+
+# ================== KEEP_ALIVE ҮШІН ================== #
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "🤖 AnimeAI Bot is Alive! 🎌"
+
+def run_flask():
+    app.run(host='0.0.0.0', port=8080)
+
+def keep_alive():
+    thread = Thread(target=run_flask)
+    thread.daemon = True
+    thread.start()
+
+# ================== .env ЖҮКТЕУ ================== #
+from dotenv import load_dotenv
+load_dotenv()  # .env файлын ең бірінші жүктеу!
 
 # ================== КОНФИГУРАЦИЯ ================== #
 logging.basicConfig(
@@ -220,17 +240,24 @@ async def handle_all_messages(message: types.Message):
 # ================== БОТТЫ ІСКЕ ҚОСУ ================== #
 async def on_startup(dp):
     logger.info("✅ Бот сәтті іске қосылды!")
-    await bot.send_message(8302815646, "🚀 Бот іске қосылды!")
+    try:
+        await bot.send_message(8302815646, "🚀 Бот іске қосылды!")
+    except:
+        pass
 
 async def on_shutdown(dp):
     logger.warning("❌ Бот өшіруде...")
     await bot.close()
 
 if __name__ == "__main__":
+    # Keep_alive іске қосу
+    keep_alive()
+    logger.info("🌐 Keep_alive сервері іске қосылды!")
+    
     logger.info("🤖 AnimeAI бот іске қосылуда...")
     executor.start_polling(
         dp, 
         skip_updates=True,
         on_startup=on_startup,
         on_shutdown=on_shutdown
-    )
+)
